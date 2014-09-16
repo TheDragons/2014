@@ -6,6 +6,8 @@ import scipy.ndimage as ndimage
 import socket
 import os.path as path
 
+#this code is very messy and not clean once so ever
+
 def nothing(x):
     pass
 
@@ -22,7 +24,7 @@ recording = False
 #robots ip address
 UDP_IP = "10.12.43.2"
 #UDP_IP = "127.0.0.1"
-UDP_PORT = 1130
+UDP_PORT = 1130 #this is just one of a few open sockets that the field will allow communication thru
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 video ="http://10.12.43.11/mjpg/video.mjpg"
@@ -36,7 +38,7 @@ cv2.createTrackbar('B/W min','Vision Window',0,255,nothing)
 cv2.createTrackbar('B/W max','Vision Window',0,255,nothing)
 cv2.createTrackbar('Size','Vision Window',0,1000,nothing)
 
-
+#this will cause the program to keep trying to connect to a camera even with no signal
 while not ret:
     cv2.imshow("Vision Window", con)
     
@@ -67,7 +69,6 @@ while(1):
     ret, img = cap.read()
     ret, orgImg = cap.read()
 
-    
     #img = cv2.imread(image)#un comment if you want to proccess just an image instead
     
     height, width, depth = img.shape
@@ -83,9 +84,6 @@ while(1):
     #here we convert it to black and white since we only are looking for brightness it is easier
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    #here we set up the zones which a indivual pixle has to be in order to be shown or not
-    
-    
     #here make the image comlpetely black and white, no other colors exist using the set up variables above
     binary = cv2.threshold(gray, threshMin, threshMax, cv2.THRESH_BINARY)[1]
     
@@ -94,9 +92,10 @@ while(1):
     #here we dectect the objects in the image and put them into an arry
     contours, hierarchy = cv2.findContours(binary,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     
-    #outlining the contours
+    #outlining the contours if wanted
     #cv2.drawContours(gray,contours,-1,(0,255,0),3)  
     
+	#shouldn't use try loops as when they fail they spike on process time
     try:
         #this finds how many objects are in the picture
         numObjects = len(contours)
@@ -146,8 +145,8 @@ while(1):
     #here  we combine our filered image with the orgional image so we know what it sees.
     cv2.drawContours(img,centCNT,-1,(255,0,0),-1)
     cv2.drawContours(binary,contours,-1,(255,0,0),-1)
+	
     #this just helps us by labeling and finding the center points of each contour
-    
     heightFilteredContours = centCNT
     
     if (len(heightFilteredContours) != 0):
@@ -165,20 +164,24 @@ while(1):
                 cv2.putText(img, str(i+1), (x-5,y+5), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, (255,255,255), 1, cv2.CV_AA) 
     #ndimage.binary_fill_holes(binary, structure=np.ones((5,5))).astype(int)
     
+	#this is  kind of crappy but it works well enough, it puts the recording message in the top right hand conner
     if recording:
         cv2.circle(img, (10,10), 10, (0,0,255), -1)
         cv2.putText(img, "rec...", (22,15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.6, (255,255,255), 4, cv2.CV_AA) 
         cv2.putText(img, "rec...", (22,15), cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.6, (0,0,0), 1, cv2.CV_AA) 
     
+	#this generate the line we see on the camera image that shows the hotgoal
     cv2.line(img, (width/2, 0), (width/2, height),(0,0,255), 2)
     
     cv2.imshow("Vision Window", img)
     #cv2.imshow("binary", binary)
     
+	#if a object is touching the red line down the screen then bam, we say it's a hot goal and set this true
     goalHot = (len(centCNT) > 0)
     
     sock.sendto(str(goalHot), (UDP_IP, UDP_PORT))   
      
+	 #this is where the key functions work from, like recordign and closing and pausing and such
     key = cv2.waitKey(20)
     key2 = 0
     
