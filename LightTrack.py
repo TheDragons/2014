@@ -57,6 +57,7 @@ numObjects = 0
 kernel = np.ones((7,7),np.uint8)
 
 while(1):
+	#here is where the tools take over and lets the user set values
     threshMin = cv2.getTrackbarPos('B/W min','Vision Window')
     threshMax = cv2.getTrackbarPos('B/W max','Vision Window')
     minSize = cv2.getTrackbarPos('Size','Vision Window')
